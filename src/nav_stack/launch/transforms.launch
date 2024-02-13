@@ -1,0 +1,8 @@
+<launch>
+      <node pkg="tf2_ros" type="static_transform_publisher" name="camera_broad" args="0 0 0 0 0 0 1 base_link camera_link" />
+      
+      <node pkg="tf2_ros" type="static_transform_publisher" name="imu_broad" args="0 0 0 0 0 0 1 base_link imu_frame" />
+      
+      <!--<node pkg="tf2_ros" type="static_transform_publisher" name="gps_broad" args="0 0 0 0 0 0 1 base_link gps_frame" />-->
+      
+</launch>

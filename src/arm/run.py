@@ -7,11 +7,11 @@ import sensor_msgs.msg as sensor_msgs
 class Node:
     def __init__(self):
         
-        self.outbuff = [0] * 4
+        self.outbuff = [0] * 6
         
         self.pub = rospy.Publisher('stm_write', std_msgs.Int32MultiArray, queue_size=10)
         rospy.init_node('arm_drive')
-        rospy.Subscriber('joy', sensor_msgs.Joy, self.joyCallback)
+        rospy.Subscriber('joy_arm', sensor_msgs.Joy, self.joyCallback)
     
     def joyCallback_0 (self, msg):
         self.outbuff = [ int (msg.axes[i] * 0xFF) for i in range(4) ]
@@ -21,18 +21,21 @@ class Node:
     def joyCallback (self, msg):
         outbuff = [0, 0, 0, 0, 0, 0]
         
-        outbuff = [ int (msg.axes[i] * 0xFF) for i in range(4) ]
-        outbuff += [ (msg.buttons[i] - msg.buttons[i+2]) * 0xFF for i in range(4, 6) ]
+       # outbuff = [ int (msg.axes[i] * 0xFF) for i in range(4) ]
+       # outbuff += [ (msg.buttons[i] - msg.buttons[i+2]) * 0xFF for i in range(4, 6) ]
         
-        axes = [ int (msg.axes[i] * 0xFF) for i in range(4) ]
-        buttons = [ (msg.buttons[i] - msg.buttons[i+2]) * 0xFF for i in range(4, 6) ]
-        
-        outbuff[0] = - axes[0]
-        outbuff[1] = axes[1]
+        axes = [ int (msg.axes[i] * 0xFF) for i in range(6) ]
+        buttons = [ (msg.buttons[1] - msg.buttons[3])*255]
+        buttons.append((msg.buttons[0] - msg.buttons[4])*255)
+       
+       #HASA
+        outbuff[0] = - axes[1]
+        outbuff[1] = - axes[0]
         outbuff[2] = axes[3]
-        outbuff[3] = buttons[1]
-        outbuff[4] = buttons[0]
-        outbuff[5] = axes[2]
+        outbuff[4] = - axes[2]
+        outbuff[3] = buttons[0]
+        outbuff[5] = - buttons[1]
+
         
         self.outbuff = outbuff
         print (self.outbuff)

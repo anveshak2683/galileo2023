@@ -1,0 +1,44 @@
+<launch>
+  	
+  <!--<remap from="/odometry/local" to="/odom" />-->
+  <!--navsat_transform_node for fusing gps data-->
+  	<node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform_node" respawn="true">
+
+    		<param name="magnetic_declination_radians" value="0"/>
+
+    		<param name="yaw_offset" value="0"/>
+    		
+    		<param name="broadcast_cartesian_transform" value="true"/>
+    		<param name="publish_filtered_gps" value="true"/>
+    		<param name="use_odometry_yaw" value="true"/>
+
+    		<remap from="/imu/data" to="/imu" />
+    		<remap from="/gps/fix" to="/fix" />
+    		<remap from="/odometry/filtered" to="/odom/global" />
+
+  	</node>
+  	
+        <include file="$(find nav_stack)/launch/transforms.launch" />
+        <include file="$(find viz_odom)/launch/viz_odom.launch" />    
+ 	<node pkg="move_base" type="move_base" respawn="true" name="move_base" output="screen">
+    		<rosparam file="$(find nav_stack)/src/costmap_common_params.yaml" command="load" ns="global_costmap" /> 
+    		<rosparam file="$(find nav_stack)/src/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    		<rosparam file="$(find nav_stack)/src/local_costmap_params.yaml" command="load" />
+    		<rosparam file="$(find nav_stack)/src/global_costmap_params.yaml" command="load" /> 
+   		<rosparam file="$(find nav_stack)/src/base_local_planner_params.yaml" command="load" />
+   		 
+   		<remap from="/map" to="/grid_map"/>
+ 	</node>
+ 	
+ 	<node pkg="traversal" type="drive_auto.py" respawn="true" name="auto" output="screen"/>	
+        <node pkg="nmea_navsat_driver" type="nmea_serial_driver" respawn="true" name="gps" output="screen">
+            <param name="port" type="string" value="/dev/ttyUSB2"/>
+            <param name="baud" type="int" value="115200"/>
+            <param name="frame_id" type="string" value="base_link"/>
+       </node>
+       
+       <node pkg="rosserial_python" type="serial_node.py" name="imu" output="screen">
+             <param name="baud" type="int" value="57600"/>
+             <param name="port" type="string" value="/dev/ttyUSB1"/>
+       </node>
+</launch>

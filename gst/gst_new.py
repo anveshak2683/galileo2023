@@ -91,11 +91,10 @@ class GTK_Main:
 
     def run(self):
 	f=open("run.sh","w")
-	f.write("#!/bin/bash\ngst-launch-1.0 videomixer name=mix ! nvvidconv ! omxh265enc control-rate=2 bitrate=2000 ! 'video/x-h265, stream-format=(string)byte-stream' ! h265parse ! rtph265pay mtu=1400 ! udpsink host=192.168.0.4 port=5001 sync=false async=false v4l2src device='/dev/video%d' ! video/x-raw, width=640, height=480 ! videobox border-alpha=0 top=0 left=-640 ! mix. v4l2src device='/dev/video%d' ! video/x-raw, width=640, height=480 ! videobox border-alpha=0 top=0 left=0 ! mix." % ((self.s1-1), (self.s2-1))
+	f.write("#!/bin/bash\ngst-launch-1.0 videomixer name=mix ! nvvidconv ! omxh265enc control-rate=2 bitrate=2000 ! 'video/x-h265, stream-format=(string)byte-stream' ! h265parse ! rtph265pay mtu=1400 ! udpsink host=10.42.0.1 port=5001 sync=false async=false v4l2src device='/dev/video%d' ! video/x-raw, width=640, height=480 ! videobox border-alpha=0 top=0 left=-640 ! mix. v4l2src device='/dev/video%d' ! video/x-raw, width=640, height=480 ! videobox border-alpha=0 top=0 left=0 ! mix." % ((self.s1-1), (self.s2-1)))
 	f.close()
-	os.system("pkill gst-launch-1.0")			
-	subprocess.Popen("./run.sh")
-
+	os.system("sudo pkill gst-launch-1.0")			
+	os.system("sudo ./run.sh")
 if __name__ == '__main__':
 	GObject.threads_init()      
 	GTK_Main() 

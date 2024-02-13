@@ -4,6 +4,8 @@ from traversal.msg import WheelRpm
 from traversal.srv import *
 from sensor_msgs.msg import Joy
 from sensors.msg import Imu
+from std_msgs.msg import Int8
+from std_msgs.msg import Bool
 import numpy
 import math
 
@@ -25,16 +27,22 @@ class drive():
 		
 		#output for arduino
 		self.pub_motor = rospy.Publisher("motion",WheelRpm,queue_size=10)   
-		
+		self.pub_mode=rospy.Publisher("led",Int8,queue_size=10)
+		self.pub_servo=rospy.Publisher("servo",Int8,queue_size=10)
+                self.pub_state=rospy.Publisher("state", Bool, queue_size=10)
+
 		rospy.Subscriber("drive_inp",WheelRpm,self.driveCallback)   #autonomous input
 		rospy.Subscriber("imu", Imu, self.imuCallback)              #bearing input
 		rospy.Subscriber("/joy",Joy,self.joyCallback)               #joystick input
-
+                
+                self.state=False
+                self.servo=0
 		self.straight = 0
 		self.zero_turn = 0
 		self.vel = 0
 		self.omega = 0
-		self.d = 0
+                self.d = 0
+                self.mode_y = 0.0
 		self.brake = False
 		self.rotate = False
 		self.s_arr = [25,35,50,75,110]#[40,100,150,200,800][5, 10, 20, 50,90]
@@ -53,13 +61,17 @@ class drive():
 		if True: # not self.rotate:	
 			rpm = WheelRpm()
 			rpm.hb = self.brake
-			
+			servo = Int8()
+			servo.data=self.servo
 			rpm.vel = 127- self.vel
 			rpm.omega = 127 + self.omega
 			print rpm 
 			print 'Mode : %d \nControl: %s \n--------------'%(self.d+1, self.control[self.active_input])
-
-			self.pub_motor.publish(rpm)
+                        self.pub_mode.publish(self.active_input)
+                        self.pub_servo.publish(servo)
+                        if(self.state == False):
+			    self.pub_motor.publish(rpm)
+                        self.pub_state.publish(self.state)
 		else:
 			print('rotation service active')
 
@@ -133,30 +145,44 @@ class drive():
 			pass
 
 	def joyCallback(self,msg):
-		
+                
 		if(msg.buttons[0] == 1):
 			self.active_input = not self.active_input
+                        self.state= not self.state
+
+                if(msg.buttons[3] ==1):
+	               self.active_input=2
+		if(msg.buttons[2]==1):
+	        	self.servo=-1
+		elif(msg.buttons[1]==1):
+	        	self.servo=1
+		else:
+	        	self.servo=0
 
 		if (self.active_input == 0):
 
-			if(abs(msg.axes[1])>0.05 or abs(msg.axes[2])>0.05):
-				self.vel = msg.axes[1]*self.s_arr[self.d]
-				self.omega = msg.axes[2]*self.s_arr[self.d]
+			if(abs(msg.axes[2])>0.05 or abs(msg.axes[1])>0.05):
+				self.vel =int(msg.axes[1]*self.s_arr[self.d])
+                                self.omega =int(msg.axes[2]*self.s_arr[self.d])
 			else:
 				self.vel = 0
 				self.omega = 0
-			if(msg.buttons[7]==1):
+			if(msg.buttons[8]==1):
 				self.brake = True
 			else:
 				self.brake = False
 
-			if(msg.buttons[5]==1):
+			if(msg.buttons[7]==1):
 				if self.d < 4:
 					self.d = self.d + 1
+                                        #self.mode_y = self.mode_y + 0.05
+                                        #self.d = int(self.mode_y)
 			
-			elif(msg.buttons[4]==1):
+			elif(msg.buttons[6]==1):
 				if self.d > 0:
 					self.d = self.d - 1
+                                        #self.mode_y = self.mode_y - 0.05
+                                        #self.d = int(self.mode_y)
 
 		else:
 			pass
